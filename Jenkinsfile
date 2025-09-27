@@ -1,71 +1,60 @@
 pipeline {
-    agent { label 'proj' }
+    agent { label 'trisha' }
+
     tools {
-        maven 'vignesh' // This must match the Maven name in Jenkins tools config
+        maven 'dvps-8pm'   // Must match the Maven installation name in Jenkins global tools config
     }
+
     environment {
-        SONARQUBE_ENV = 'sonar'
-        ECR_REPO = 'xyz'
-        AWS_REGION = 'us-east-1'
-        IMAGE_NAME = 'we-repo'
+        AWS_REGION     = "us-east-1"
+        AWS_CREDENTIAL = "samantha"
+        ECR_REGISTRY   = "119994750175.dkr.ecr.us-east-1.amazonaws.com"
+        ECR_REPO       = "my_repo"
+        DOCKER_IMAGE   = "${ECR_REGISTRY}/${ECR_REPO}:latest"
+        CONTAINER_NAME = "my-con1"
+        HOST_PORT      = "80"
+        APP_PORT       = "8080"
+        GIT_URL        = "https://github.com/vikki-iam/My-Demo-Project.git"
     }
+
     stages {
         stage('CheckOut') {
             steps {
-               git 'https://github.com/vikki-iam/My-Demo-Project.git'
+                git "${GIT_URL}"
             }
         }
-        stage('SonarQube Analysis') {
+
+        stage('Code-Build') {
             steps {
-                echo "Starting SonarQube static code analysis..."
-                withSonarQubeEnv("${env.SONARQUBE_ENV}") {
-                    withCredentials([string(credentialsId: 'vigneshhh', variable: 'SONAR_TOKEN')]) {
-                        sh """
-                            mvn clean verify sonar:sonar \
-                              -Dsonar.projectKey=demo \
-                              -Dsonar.projectName='demo' \
-                              -Dsonar.host.url=http://54.164.182.242:9000 \
-                              -Dsonar.token=$SONAR_TOKEN
-                        """
+                sh 'mvn clean install'
+                sh "whoami"
+            }
+        }
+
+        stage('Docker-Build') {
+            steps {
+                script {
+                    echo "Building Docker image and pushing to ECR..."
+                    withAWS(region: "${AWS_REGION}", credentials: "${AWS_CREDENTIAL}") {
+                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                        sh "docker build -t ${ECR_REPO} ."
+                        sh "docker tag ${ECR_REPO}:latest ${DOCKER_IMAGE}"
+                        sh "docker push ${DOCKER_IMAGE}"
                     }
                 }
             }
         }
-        stage('Wait for Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                 }
-            }
-         }
-        stage('MVN-BUILD') {
-            steps {
-               sh 'mvn clean install'
-            }
-        }
-        stage('Docker Build & Push to ECR') {
+
+        stage('Deploy') {
             steps {
                 script {
-                    echo "Building Docker image and pushing to ECR..."
-                    withAWS(region: "${env.AWS_REGION}", credentials: 'demo') {
-                        sh 'docker build -t $IMAGE_NAME .'
-                        sh "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${ECR_REPO.split('/')[0]}"
-                        sh 'docker tag $IMAGE_NAME:latest $ECR_REPO:latest'
-                        sh 'docker push $ECR_REPO:latest'
-                    }
-                }
-            }
-        }
-       stage('Deploy') {
-            steps {
-                script {
-                    echo "Building Docker image and pushing to ECR..."
-                    withAWS(region: "${env.AWS_REGION}", credentials: 'demo') {
-                       sh "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${ECR_REPO.split('/')[0]}"
-                       sh 'docker pull $ECR_REPO:latest'
-                       sh 'docker stop con-2'
-                       sh 'docker rm cont-2'
-                       sh 'docker run -itd --name con-2 -p "81:8080" $ECR_REPO:latest '
+                    echo "Deploying container..."
+                    withAWS(region: "${AWS_REGION}", credentials: "${AWS_CREDENTIAL}") {
+                        sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
+                        sh "docker pull ${DOCKER_IMAGE}"
+                        sh "docker stop ${CONTAINER_NAME} || true"
+                        sh "docker rm ${CONTAINER_NAME} || true"
+                        sh "docker run -d --name ${CONTAINER_NAME} -p ${HOST_PORT}:${APP_PORT} ${DOCKER_IMAGE}"
                     }
                 }
             }
