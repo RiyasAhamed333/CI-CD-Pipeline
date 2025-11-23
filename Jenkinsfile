@@ -1,8 +1,8 @@
 pipeline {
-    agent { label 'hello' }
+    agent { label 'slave-1' }
 
     tools {
-        maven 'dvps-8pm'   // Must match the Maven installation name in Jenkins global tools config
+        maven 'apache-maven'   // Must match the Maven installation name in Jenkins global tools config
     }
 
     environment {
