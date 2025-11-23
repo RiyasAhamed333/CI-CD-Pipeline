@@ -146,13 +146,16 @@ EXPOSE 8080
 CMD ["catalina.sh", "run"]
 ```   
 
-⚙️ How the Pipeline Works
-Stage	                 Description
-Checkout	        Pulls code from GitHub
-Maven Build	      Compiles & packages .war
-Docker Build	    Creates image with Tomcat
-Push to ECR	      Stores image in AWS registry
-Deploy	          Runs updated container on Jenkins node
+🌸 How the Pipeline Works
+
+| Stage        | Description                               |
+|-------------|-------------------------------------------|
+| Checkout     | Pulls code from GitHub                   |
+| Maven Build  | Compiles & packages `.war`               |
+| Docker Build | Creates image with Tomcat                |
+| Push to ECR  | Stores image in AWS registry             |
+| Deploy       | Runs updated container on Jenkins node   |
+
 
 🌎 Deployment Access
 
