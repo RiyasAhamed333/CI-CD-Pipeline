@@ -132,26 +132,27 @@ pipeline {
         }
     }
 }
+```
 
 
 
+# 🐳 Dockerfile (Tomcat Deployment)
 
-
-🐳 Dockerfile (Tomcat Deployment)
+```dockerfile
 FROM tomcat:10.1-jdk17-temurin
 RUN rm -rf /usr/local/tomcat/webapps/*
 COPY target/java-app.war /usr/local/tomcat/webapps/ROOT.war
 EXPOSE 8080
 CMD ["catalina.sh", "run"]
-
+```   
 
 ⚙️ How the Pipeline Works
-Stage	Description
-Checkout	Pulls code from GitHub
-Maven Build	Compiles & packages .war
-Docker Build	Creates image with Tomcat
-Push to ECR	Stores image in AWS registry
-Deploy	Runs updated container on Jenkins node
+Stage	                 Description
+Checkout	        Pulls code from GitHub
+Maven Build	      Compiles & packages .war
+Docker Build	    Creates image with Tomcat
+Push to ECR	      Stores image in AWS registry
+Deploy	          Runs updated container on Jenkins node
 
 🌎 Deployment Access
 
