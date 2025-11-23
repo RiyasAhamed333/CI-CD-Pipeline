@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'trisha' }
+    agent { label 'hello' }
 
     tools {
         maven 'dvps-8pm'   // Must match the Maven installation name in Jenkins global tools config
@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         AWS_REGION     = "us-east-1"
-        AWS_CREDENTIAL = "samantha"
+        AWS_CREDENTIAL = "aws-creds"
         ECR_REGISTRY   = "119994750175.dkr.ecr.us-east-1.amazonaws.com"
         ECR_REPO       = "my_repo"
         DOCKER_IMAGE   = "${ECR_REGISTRY}/${ECR_REPO}:latest"
